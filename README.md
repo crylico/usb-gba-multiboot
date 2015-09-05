@@ -20,12 +20,6 @@ The Teensy acts as a USB serial device and takes 4 bytes from the PC, transmits 
 
 Data are sent high byte first and lower byte last.
 
-## Second stage loader
-
-The second stage loader is supposed to speed up transfer but the speed difference is negligent when using SIO normal mode.
-
-Basically, it's useless.
-
 ## How to use
 
 Turn on your GBA without a game pak, plug everything in and run the gbaxfer program.

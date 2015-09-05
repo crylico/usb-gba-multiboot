@@ -41,7 +41,7 @@
 
 
 # Target file name (without extension).
-TARGET = multiboot_normal
+TARGET = main
 
 
 # List C source files here. (C dependencies are automatically generated.)

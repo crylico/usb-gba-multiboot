@@ -65,7 +65,6 @@ int xfer(uint32_t *data_);
 int xfer(uint32_t *data_) {
     uint32_t data = *data_;
     int i;
-    //WAIT_WITH_TIMEOUT(!(GBA_IN&(1<<MISO_BIT)), 25600, goto error);
     cli();
 
     RESET_TIMER();
@@ -85,7 +84,6 @@ int xfer(uint32_t *data_) {
     *data_ = data;
     return 0;
 
-    error:
     return -1;
 }
 

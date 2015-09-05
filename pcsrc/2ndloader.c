@@ -60,7 +60,7 @@ int secondStageLoad(unsigned char* rom, unsigned size, int xferdelay, gbaHandle 
 
     if (data == (0x02000000 + i-4)) fprintf(stderr,"\n2nd stage loading successful\n");*/
 
-    unsigned checksum;
+    unsigned checksum = 0;
     for (i=0;i<size;i+=4) {
         data = (rom[i+3]<<24) | (rom[i+2]<<16) | (rom[i+1]<<8) | rom[i];
         checksum += data;

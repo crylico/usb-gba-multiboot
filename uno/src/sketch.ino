@@ -73,7 +73,7 @@ void loop() {
 		Serial.write(fromGBA) & 0xff;
 
 		// Flush the serial port because
-		// only should be dealing with 4 bytes at at time
+		// only should be dealing with 4 bytes at a time
 		Serial.flush();
 	}
 }
@@ -91,7 +91,7 @@ uint32_t exchange(uint32_t toGBA) {
 	for(uint8_t i = 0; i < 32; i++) {
 
 		// Set the CLOCK and MOSI low to start bit exchange
-		GBA_OUT &= ~((1 << CLOCK_BIT) | (1 << MOSI_BIT)); 
+		GBA_OUT &= ~((1 << CLOCK_BIT) | (1 << MOSI_BIT));
 
 		// Set MOSI to the MSB of data
 		// Note that below, the MSB of data is popped off, like a shift register

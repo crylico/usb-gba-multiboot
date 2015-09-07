@@ -36,6 +36,7 @@ gbaHandle* initGbaHandle(char* device, int mode) {
     }
     struct termios tio = {0};
     tcgetattr(gba->fd, &tio);
+    cfsetispeed(&tio, B38400);
     cfsetospeed(&tio, B38400);
 
     if (mode == MODE_MULTIPLAYER) {

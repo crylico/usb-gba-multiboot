@@ -22,70 +22,34 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "xfer.h"
-#include "2ndloader.h"
 #include "multi.h"
 
-enum {
-    SEND_2ND_LOADER = (1<<0),
-    SEND_VIA_2ND_LOADER = (1<<1)
-};
-
-
 void printHelp() {
-    fprintf(stderr,
-    "Usage: gbaxfer [-2 | -c] /path/to/file\n"
-    "Default action is to send image via 2nd loader\n"
-    "    -2: Send 2nd loader\n"
-    "    -c: Boot image from 2nd loader\n");
+    fprintf(stderr, "Usage: gbaxfer /path/to/serialport /path/to/file\n");
 }
 
 
-unsigned processOptions(int argc, char* argv[], char ** romfile, char **serialPort) {
-    unsigned options = 0, i;
-    *romfile = NULL;
-    for (i=1; i<argc;i++) {
-        if (*argv[i] == '-') {
-            switch (*(argv[i]+1)) {
-                case '2':
-                    options |= SEND_2ND_LOADER;
-                    break;
-                case 'b':
-                    options |= SEND_VIA_2ND_LOADER;
-                    break;
-                default:
-                    fprintf(stderr,"Unknown option: -%s\n", argv[i]);
-                    break;
-            }
-        } 
-        else if (i == argc-2) {
-            *serialPort = argv[i];
-        }
-        else if (i == argc-1) {
-            *romfile = argv[i];
-        }
-    }
-    return options;
+void processOptions(int argc, char* argv[], char ** romfile, char **serialPort) {
+
+    *serialPort = argv[1];
+    *romfile = argv[2];
 }
 
 int main(int argc, char* argv[]) {
-    if (argc < 2) {
+    if (argc != 3) {
         printHelp();
         return 0;
     }
+
     char *filename;
     char *serialPort;
-    unsigned options = processOptions(argc, argv, &filename, &serialPort);
+    processOptions(argc, argv, &filename, &serialPort);
 
     struct timeval timebegin, timeend;
     gettimeofday(&timebegin, NULL);
 
-
     gbaHandle *gba = initGbaHandle(serialPort, MODE_NORMAL);
 
-    int ret = 0;
-    if (options & SEND_2ND_LOADER) {
-        ret = secondStageSend(gba);
-    }
     if (filename) {
         FILE *rom = fopen(filename,"rb");
         if (!gba || !rom) {
@@ -102,12 +66,7 @@ int main(int argc, char* argv[]) {
         unsigned char* romdata = malloc(size);
         fread(romdata, 1, size, rom);
 
-        if ((options & SEND_VIA_2ND_LOADER) && ret == 0) {
-            secondStageLoad(romdata, size, -1, gba);
-        }
-        if ((options & (SEND_2ND_LOADER | SEND_VIA_2ND_LOADER)) == 0) {
-            gbaMultibootSend(romdata, size, gba);
-        }
+        gbaMultibootSend(romdata, size, gba);
 
         free(romdata);
         fclose(rom);

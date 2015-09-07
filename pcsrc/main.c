@@ -40,7 +40,7 @@ void printHelp() {
 }
 
 
-unsigned processOptions(int argc, char* argv[], char ** romfile) {
+unsigned processOptions(int argc, char* argv[], char ** romfile, char **serialPort) {
     unsigned options = 0, i;
     *romfile = NULL;
     for (i=1; i<argc;i++) {
@@ -56,7 +56,11 @@ unsigned processOptions(int argc, char* argv[], char ** romfile) {
                     fprintf(stderr,"Unknown option: -%s\n", argv[i]);
                     break;
             }
-        } else if (i == argc-1) {
+        } 
+        else if (i == argc-2) {
+            *serialPort = argv[i];
+        }
+        else if (i == argc-1) {
             *romfile = argv[i];
         }
     }
@@ -69,13 +73,14 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     char *filename;
-    unsigned options = processOptions(argc, argv, &filename);
+    char *serialPort;
+    unsigned options = processOptions(argc, argv, &filename, &serialPort);
 
     struct timeval timebegin, timeend;
     gettimeofday(&timebegin, NULL);
 
 
-    gbaHandle *gba = initGbaHandle("/dev/tty.usbmodem12341", MODE_NORMAL);
+    gbaHandle *gba = initGbaHandle(serialPort, MODE_NORMAL);
 
     int ret = 0;
     if (options & SEND_2ND_LOADER) {
@@ -83,7 +88,10 @@ int main(int argc, char* argv[]) {
     }
     if (filename) {
         FILE *rom = fopen(filename,"rb");
-        if (!gba || !rom) return -1;
+        if (!gba || !rom) {
+            fclose(rom);
+            return -1;
+        }
         unsigned size;
         struct stat stats;
         fstat(fileno(rom), &stats);

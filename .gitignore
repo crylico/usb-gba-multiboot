@@ -11,3 +11,4 @@
 gbaxfer
 bin2c
 *.gba
+*.build/

@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include <avr/interrupt.h>
+#include <util/delay.h>
+
 #define BIT_TIME 256000
 
 #define CPU_PRESCALE(n) (CLKPR = 0x80, CLKPR = (n))
@@ -46,7 +50,7 @@ void setup() {
 
 	Serial.begin(38400);
 
-	delay(1000);
+	_delay_ms(1000);
 
 	initTimer();
 }
@@ -56,21 +60,23 @@ void loop() {
 	if(Serial.available() >= 4) {
 		uint32_t data = 0;
 
-		// Read 4 bytes into "data"
+		// Read 4 bytes into 'data'
 		data |= Serial.read() << 24;
 		data |= Serial.read() << 16;
 		data |= Serial.read() << 8;
 		data |= Serial.read();
 
 		// Perform the exchange between normal serial
-		// and GBA's 32-bit protocol
-		uint32_t fromGBA = exchange(data);
+		// and GBA's 32-bit protocol.
+        // Before the exchange, 'data' contains data from PC --> GBA
+	    exchange(&data);
+        // After the exchange, 'data' contains data from GBA --> PC
 
 		// Write any data that was sent from the GBA during exchange
-		Serial.write(fromGBA >> 24) & 0xff;
-		Serial.write(fromGBA >> 16) & 0xff;
-		Serial.write(fromGBA >> 8) & 0xff;
-		Serial.write(fromGBA) & 0xff;
+		Serial.write(data >> 24) & 0xff;
+		Serial.write(data >> 16) & 0xff;
+		Serial.write(data >> 8) & 0xff;
+		Serial.write(data) & 0xff;
 
 		// Flush the serial port because
 		// only should be dealing with 4 bytes at a time
@@ -78,9 +84,14 @@ void loop() {
 	}
 }
 
-uint32_t exchange(uint32_t toGBA) {
+/*
+ * Having data be an input pointer reduces return overhead
+ */
+void exchange(uint32_t *data_) {
 
-	uint32_t data = toGBA;
+    // Pull in the value of the input pointer
+	uint32_t data = *data_;
+
 	// Clear global interrupt flag
 	// This function must not be interrupted
 	cli();
@@ -97,7 +108,7 @@ uint32_t exchange(uint32_t toGBA) {
 		// Note that below, the MSB of data is popped off, like a shift register
 		GBA_OUT |= ((data >> 31) & 1) << MOSI_BIT;
 
-		// Wait for AVR clock to tick
+		// Wait for AVR timer to tick
 		waitTimer();
 
 		// Set GBA clock high
@@ -110,12 +121,13 @@ uint32_t exchange(uint32_t toGBA) {
 		// Pull a bit in from the GBA and put it in the LSB of data
 		data |= (GBA_IN >> MISO_BIT) & 1;
 
-		// Wait for AVR clock to tock
+		// Wait for AVR timer to tock
 		waitTimer();
 	}
 
 	// Set global interrupt flag
 	sei();
 
-	return data;
+    // Set the input pointer's value
+    *data_ = data;
 }
